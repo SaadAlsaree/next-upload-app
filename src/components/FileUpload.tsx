@@ -1,5 +1,5 @@
 // components/FileUpload.tsx
-
+'use client';
 import { useState, ChangeEvent, FormEvent } from 'react';
 
 export default function FileUpload() {
@@ -16,7 +16,9 @@ export default function FileUpload() {
       if (!file) return;
 
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('files', file);
+      formData.append('path', 'upload');
+      formData.append('root', 'public');
 
       const res = await fetch('/api/upload', {
          method: 'POST',

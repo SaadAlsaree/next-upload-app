@@ -3,6 +3,8 @@ import fs from 'fs';
 import { pipeline } from 'stream';
 import { promisify } from 'util';
 import { v4 as uuidv4 } from 'uuid';
+import { Readable } from 'stream';
+import { ReadableStream } from 'web-streams-polyfill';
 
 const pump = promisify(pipeline);
 
@@ -14,12 +16,15 @@ export async function POST(req: Request) {
         const path = formData.get('path') as string;
         const root = formData.get('root') as string;
 
+
         if (files.length > 0) {
             const file = files[0] as File;
             const uniqueFileName = uuidv4();
             const fileExtension = file.name.split('.').pop(); // Extract file extension
             const filePath = `./${root}/${path}/${uniqueFileName}.${fileExtension}`;
-            await pump(file.stream(), fs.createWriteStream(filePath));
+            const readableWebStream = file.stream();
+            const nodeReadableStream = Readable.fromWeb(readableWebStream as ReadableStream<Uint8Array>);
+            await pump(nodeReadableStream, fs.createWriteStream(filePath));
             return NextResponse.json({ status: "success", data: { size: file.size, ext: fileExtension, path: filePath } });
         } else {
             return NextResponse.json({ status: "fail", data: "No file uploaded" });
